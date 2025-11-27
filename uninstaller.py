@@ -142,30 +142,30 @@ del /f /q "%~f0"
 
 def main():
     print("=" * 60)
-    print("   JIIT WifiAutoAuthenticator - UNINSTALLER")
+    print("   JIIT WiFi Auto-Authenticator - UNINSTALLER")
     print("=" * 60)
     print()
     
     # Check for admin privileges
     if not is_admin():
-        print("⚠ This uninstaller needs Administrator privileges.")
-        print("  Requesting admin access...")
+        print("⚠ Administrator privileges required.")
+        print("  Requesting elevation...")
         print()
         if not run_as_admin():
             sys.exit(0)
         return
     
-    print("✓ Running with Administrator privileges")
+    print("✓ Administrator access granted")
     print()
     
     # Confirm uninstallation
-    print("This will remove:")
-    print("  • Auto-login Task Scheduler entry")
-    print("  • Saved WiFi credentials")
-    print("  • Program files (optional)")
+    print("The following will be removed:")
+    print("  • Task Scheduler auto-authentication task")
+    print("  • Saved WiFi login credentials")
+    print("  • Program files (you will be asked)")
     print()
     
-    confirm = input("Are you sure you want to uninstall? (yes/no): ").strip().lower()
+    confirm = input("Proceed with uninstallation? (yes/no): ").strip().lower()
     
     if confirm not in ['yes', 'y']:
         print("\nUninstallation cancelled.")
@@ -174,12 +174,12 @@ def main():
     
     print()
     print("=" * 60)
-    print("Starting Uninstallation...")
+    print("Uninstalling...")
     print("=" * 60)
     print()
     
     # Step 1: Remove Task Scheduler task
-    print("[1/3] Removing Task Scheduler entry...")
+    print("[1/3] Removing automatic authentication task...")
     success, message = remove_task_scheduler_task()
     if success:
         print(f"  ✓ {message}")
@@ -188,7 +188,7 @@ def main():
     print()
     
     # Step 2: Remove config file
-    print("[2/3] Removing saved credentials...")
+    print("[2/3] Deleting saved credentials...")
     success, message = remove_config_file()
     if success:
         print(f"  ✓ {message}")
@@ -197,7 +197,7 @@ def main():
     print()
     
     # Step 3: Ask about program files
-    print("[3/3] Program files:")
+    print("[3/3] Cleaning up program files:")
     program_files = get_program_files()
     
     if program_files:
@@ -246,23 +246,23 @@ def main():
     
     print()
     print("=" * 60)
-    print("   UNINSTALLATION COMPLETE!")
+    print("   UNINSTALLATION COMPLETE")
     print("=" * 60)
     print()
-    print("What was removed:")
-    print("  ✓ Task Scheduler auto-login task")
-    print("  ✓ Saved WiFi credentials")
+    print("Successfully removed:")
+    print("  ✓ Automatic authentication task")
+    print("  ✓ Saved login credentials")
     
     if delete_files in ['yes', 'y']:
-        print("  ✓ Program files")
+        print("  ✓ Program executables")
     
     print()
-    print("WiFi auto-login has been disabled.")
-    print("You will now need to login manually to college WiFi.")
+    print("JIIT WiFi auto-authentication has been disabled.")
+    print("Manual login will be required for WiFi access.")
     print()
     
     if delete_files in ['yes', 'y']:
-        print("Note: Uninstaller.exe will be deleted in 10 seconds after closing.")
+        print("Note: This uninstaller will self-delete in 10 seconds.")
         print()
     
     input("Press Enter to exit...")

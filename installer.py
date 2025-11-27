@@ -130,45 +130,46 @@ def create_task_scheduler_task(exe_path):
 
 def main():
     print("=" * 60)
-    print("   JIIT WiFi Auto-Login - INSTALLER")
+    print("   JIIT WiFi Auto-Authenticator - INSTALLER")
     print("=" * 60)
     print()
     
     # Check for admin privileges
     if not is_admin():
-        print("⚠ This installer needs Administrator privileges.")
-        print("  Requesting admin access...")
+        print("⚠ Administrator privileges required.")
+        print("  Requesting elevation...")
         print()
         if not run_as_admin():
             sys.exit(0)
         return
     
-    print("✓ Running with Administrator privileges")
+    print("✓ Administrator access granted")
     print()
     
     # Find the main executable
     exe_path = get_exe_path()
     
     if not exe_path.exists():
-        print("✗ ERROR: Could not find JIIT-WiFiAutoLogin.exe")
-        print(f"  Expected location: {exe_path}")
+        print("✗ ERROR: Main program not found")
+        print(f"  Looking for: {exe_path.name}")
+        print(f"  Searched in: {exe_path.parent}")
         print()
-        print("Please ensure both files are in the same folder:")
-        print("  - JIIT-WiFiAutoLogin.exe (main program)")
-        print("  - Installer.exe (this installer)")
+        print("Ensure the following files are in the same directory:")
+        print(f"  • {exe_path.name} (main program)")
+        print("  • Installer.exe (this file)")
         input("\nPress Enter to exit...")
         sys.exit(1)
     
-    print(f"✓ Found main program: {exe_path}")
+    print(f"✓ Located: {exe_path.name}")
     print()
     
     # Run the main program once for credential setup
     print("=" * 60)
-    print("STEP 1: First-Time Credential Setup")
+    print("STEP 1: Configure WiFi Credentials")
     print("=" * 60)
     print()
-    print("The WiFi login program will now run.")
-    print("Please enter your college WiFi credentials when prompted.")
+    print("You will now be prompted to enter your JIIT WiFi credentials.")
+    print("These will be securely saved for automatic authentication.")
     print()
     input("Press Enter to continue...")
     print()
@@ -176,23 +177,23 @@ def main():
     try:
         subprocess.run([str(exe_path)], check=True)
     except subprocess.CalledProcessError:
-        print("\n⚠ Setup was cancelled or failed.")
-        choice = input("Do you want to continue with Task Scheduler setup anyway? (y/n): ")
+        print("\n⚠ Credential setup was cancelled or incomplete.")
+        choice = input("Continue with Task Scheduler setup? (y/n): ")
         if choice.lower() != 'y':
-            print("Installation cancelled.")
+            print("\nInstallation cancelled.")
             input("\nPress Enter to exit...")
             sys.exit(1)
     except KeyboardInterrupt:
-        print("\n\nSetup interrupted by user.")
+        print("\n\nInstallation interrupted.")
         input("\nPress Enter to exit...")
         sys.exit(1)
     
     print()
     print("=" * 60)
-    print("STEP 2: Setting up Auto-Login on WiFi Connect")
+    print("STEP 2: Configure Automatic Authentication")
     print("=" * 60)
     print()
-    print("Creating Task Scheduler task...")
+    print("Setting up Task Scheduler to run on WiFi connection...")
     
     success, message = create_task_scheduler_task(exe_path)
     
@@ -201,20 +202,21 @@ def main():
         print("✓ " + message)
         print()
         print("=" * 60)
-        print("   INSTALLATION COMPLETE!")
+        print("   INSTALLATION SUCCESSFUL!")
         print("=" * 60)
         print()
-        print("What happens now:")
-        print("  • Whenever you connect to college WiFi (AP networks)")
-        print("  • The script will automatically log you in")
-        print("  • No manual action needed!")
+        print("Setup Complete:")
+        print("  ✓ Task Scheduler configured")
+        print("  ✓ Auto-authentication enabled")
         print()
-        print("To test: Disconnect and reconnect to college WiFi")
+        print("How it works:")
+        print("  • Detects when you connect to JIIT WiFi networks")
+        print("  • Automatically authenticates using saved credentials")
+        print("  • No manual intervention required")
         print()
-        print("To uninstall:")
-        print("  1. Open Task Scheduler (Win+R → taskschd.msc)")
-        print("  2. Find 'JIIT-WiFi-AutoLogin' in the list")
-        print("  3. Right-click → Delete")
+        print("Supported networks: AP, ABB, HOSTEL, LRC, JIIT")
+        print()
+        print("To uninstall, run the Uninstaller.exe")
         print()
     else:
         print("✗ " + message)
@@ -223,7 +225,7 @@ def main():
         print("   INSTALLATION FAILED")
         print("=" * 60)
         print()
-        print("Please try manual setup or contact support.")
+        print("Task Scheduler setup failed. Please check permissions.")
         print()
     
     input("Press Enter to exit...")
