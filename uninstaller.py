@@ -64,10 +64,18 @@ def remove_config_file():
     
     try:
         if config_file.exists():
+            # Delete the file
             config_file.unlink()
-            return True, f"Credentials file removed: {config_file}"
+            
+            # Verify deletion
+            if not config_file.exists():
+                return True, f"Credentials file removed: {config_file}"
+            else:
+                return False, f"Failed to delete credentials file: {config_file}"
         else:
-            return True, "No credentials file found (already removed)"
+            return True, f"No credentials file found at: {config_file}"
+    except PermissionError:
+        return False, f"Permission denied: Cannot delete {config_file}"
     except Exception as e:
         return False, f"Error removing credentials file: {str(e)}"
 

@@ -193,17 +193,32 @@ def main():
     print("College WiFi Auto-Login Script")
     print("=" * 50)
     
-    # First, check if internet is already accessible
-    print("\nChecking internet connectivity...")
-    if check_internet_connection():
-        print("✓ Internet already accessible. No login needed.")
-        print("=" * 50)
-        return
+    # Check if --setup flag is present (from installer)
+    force_setup = '--setup' in sys.argv
     
-    print("✗ No internet access detected.")
-    print("Proceeding with authentication...\n")
+    if not force_setup:
+        # First, check if internet is already accessible
+        print("\nChecking internet connectivity...")
+        if check_internet_connection():
+            print("✓ Internet already accessible. No login needed.")
+            print("=" * 50)
+            return
+        
+        print("✗ No internet access detected.")
+        print("Proceeding with authentication...\n")
+    else:
+        print("\nℹ Running in setup mode (from installer)\n")
     
-    # Load or setup credentials
+    # Force credential setup if --setup flag is present
+    if force_setup:
+        print("Setting up WiFi credentials...\n")
+        credentials = setup_credentials()
+        if not credentials:
+            print("\n✗ Setup cancelled or failed")
+            sys.exit(1)
+        return  # Exit after setup when in setup mode
+    
+    # Normal operation: load existing credentials
     credentials = load_credentials()
     
     if not credentials:

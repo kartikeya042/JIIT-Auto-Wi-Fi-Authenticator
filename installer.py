@@ -175,7 +175,7 @@ def main():
     print()
     
     try:
-        subprocess.run([str(exe_path)], check=True)
+        subprocess.run([str(exe_path), '--setup'], check=True)
     except subprocess.CalledProcessError:
         print("\n⚠ Credential setup was cancelled or incomplete.")
         choice = input("Continue with Task Scheduler setup? (y/n): ")
