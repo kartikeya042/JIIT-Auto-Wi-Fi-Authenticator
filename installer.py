@@ -27,41 +27,18 @@ def run_as_admin():
 
 
 def get_exe_path():
-    """Get the path of the main executable using keyword detection"""
+    """Get the path of the main executable"""
+    # When running as script
     if getattr(sys, 'frozen', False):
         # Running as compiled executable
-        search_dir = Path(sys.executable).parent
+        return Path(sys.executable).parent / "JIIT-AutoAuth.exe"
     else:
-        # Running as script
-        search_dir = Path(__file__).parent
-    
-    # Keywords to identify main executable
-    keywords = ["jiit", "wifi", "auto", "auth"]
-    
-    # Search for matching exe
-    try:
-        for exe_file in search_dir.glob("*.exe"):
-            filename_lower = exe_file.name.lower()
-            # Skip installer and uninstaller
-            if "installer" in filename_lower or "uninstaller" in filename_lower:
-                continue
-            # Check if it matches our keywords
-            if any(keyword in filename_lower for keyword in keywords):
-                return exe_file
-        
-        # Also check dist folder
-        dist_dir = search_dir / "dist"
-        if dist_dir.exists():
-            for exe_file in dist_dir.glob("*.exe"):
-                filename_lower = exe_file.name.lower()
-                if "installer" not in filename_lower and "uninstaller" not in filename_lower:
-                    if any(keyword in filename_lower for keyword in keywords):
-                        return exe_file
-    except:
-        pass
-    
-    # Fallback to default name
-    return search_dir / "JIIT-AutoAuth.exe"
+        # Running as script - look for exe in same directory
+        script_dir = Path(__file__).parent
+        exe_path = script_dir / "JIIT-AutoAuth.exe"
+        if not exe_path.exists():
+            exe_path = script_dir / "dist" / "JIIT-AutoAuth.exe"
+        return exe_path
 
 
 def create_task_scheduler_task(exe_path):
@@ -79,7 +56,7 @@ def create_task_scheduler_task(exe_path):
   <Triggers>
     <EventTrigger>
       <Enabled>true</Enabled>
-      <Subscription>&lt;QueryList&gt;&lt;Query Id="0" Path="Microsoft-Windows-NetworkProfile/Operational"&gt;&lt;Select Path="Microsoft-Windows-NetworkProfile/Operational"&gt;*[System[Provider[@Name='Microsoft-Windows-NetworkProfile'] and EventID=10000]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;</Subscription>
+      <Subscription>&lt;QueryList&gt;&lt;Query Id="0" Path="Microsoft-Windows-WLAN-AutoConfig/Operational"&gt;&lt;Select Path="Microsoft-Windows-WLAN-AutoConfig/Operational"&gt;*[System[Provider[@Name='Microsoft-Windows-WLAN-AutoConfig'] and EventID=8001]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;</Subscription>
       <Delay>PT5S</Delay>
     </EventTrigger>
   </Triggers>

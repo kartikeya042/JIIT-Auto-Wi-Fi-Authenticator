@@ -4,14 +4,10 @@ import subprocess
 import sys
 import json
 import os
-import tempfile
 from pathlib import Path
 
 # Configuration file path
 CONFIG_FILE = Path.home() / '.wifi_auto_login_config.json'
-
-# Lock file to prevent multiple instances
-LOCK_FILE = Path(tempfile.gettempdir()) / "jiit_wifi_auth.lock"
 
 # Portal configuration
 PORTAL_URL = "http://172.16.68.6:8090/httpclient.html"
@@ -23,33 +19,6 @@ WIFI_KEYWORDS = ["AP", "ABB", "HOSTEL", "LRC", "JIIT"]
 # Monitoring mode - set to True to run continuously (NOT RECOMMENDED for battery)
 # Set to False for event-triggered mode (RECOMMENDED)
 MONITOR_MODE = False
-
-
-def acquire_lock():
-    """Acquire lock to prevent multiple instances"""
-    try:
-        if LOCK_FILE.exists():
-            # Check if lock is stale (older than 2 minutes)
-            lock_age = time.time() - LOCK_FILE.stat().st_mtime
-            if lock_age < 120:  # 2 minutes
-                return False
-            # Remove stale lock
-            LOCK_FILE.unlink()
-        
-        # Create lock file
-        LOCK_FILE.write_text(str(os.getpid()))
-        return True
-    except:
-        return False
-
-
-def release_lock():
-    """Release the lock"""
-    try:
-        if LOCK_FILE.exists():
-            LOCK_FILE.unlink()
-    except:
-        pass
 
 
 def load_credentials():
@@ -224,70 +193,62 @@ def main():
     print("College WiFi Auto-Login Script")
     print("=" * 50)
     
-    # Check if another instance is running
-    if not acquire_lock():
-        print("\n⚠ Another instance is already running. Exiting.")
+    # First, check if internet is already accessible
+    print("\nChecking internet connectivity...")
+    if check_internet_connection():
+        print("✓ Internet already accessible. No login needed.")
+        print("=" * 50)
         return
     
-    try:
-        # First, check if internet is already accessible
-        print("\nChecking internet connectivity...")
-        if check_internet_connection():
-            print("✓ Internet already accessible. No login needed.")
-            print("=" * 50)
-            return
-        
-        print("✗ No internet access detected.")
-        print("Proceeding with authentication...\n")
-        
-        # Load or setup credentials
-        credentials = load_credentials()
-        
+    print("✗ No internet access detected.")
+    print("Proceeding with authentication...\n")
+    
+    # Load or setup credentials
+    credentials = load_credentials()
+    
+    if not credentials:
+        credentials = setup_credentials()
         if not credentials:
-            credentials = setup_credentials()
-            if not credentials:
-                print("\n✗ Setup cancelled or failed")
+            print("\n✗ Setup cancelled or failed")
+            return
+    else:
+        print(f"✓ Loaded credentials for user: {credentials['username']}")
+    
+    username = credentials['username']
+    password = credentials['password']
+    
+    # Check if we should run in monitoring mode
+    if MONITOR_MODE:
+        monitor_wifi_changes(username, password)
+    else:
+        # Single attempt mode (original behavior)
+        max_attempts = 5
+        
+        for attempt in range(1, max_attempts + 1):
+            print(f"\nAttempt {attempt}/{max_attempts}")
+            
+            current_wifi = get_connected_wifi()
+            if not current_wifi:
+                print("No WiFi connected, waiting...")
+                time.sleep(5)
+                continue
+            
+            # Check if WiFi name contains any of the configured keywords
+            if not any(k.lower() in current_wifi.lower() for k in WIFI_KEYWORDS):
+                print(f"Not a college network: {current_wifi}")
+                print(f"(Looking for networks matching: {', '.join(WIFI_KEYWORDS)})")
+                time.sleep(5)
+                continue
+            
+            if attempt_login(username, password, current_wifi):
                 return
-        else:
-            print(f"✓ Loaded credentials for user: {credentials['username']}")
-        
-        username = credentials['username']
-        password = credentials['password']
-        
-        # Check if we should run in monitoring mode
-        if MONITOR_MODE:
-            monitor_wifi_changes(username, password)
-        else:
-            # Single attempt mode (original behavior)
-            max_attempts = 5
             
-            for attempt in range(1, max_attempts + 1):
-                print(f"\nAttempt {attempt}/{max_attempts}")
-                
-                current_wifi = get_connected_wifi()
-                if not current_wifi:
-                    print("No WiFi connected, waiting...")
-                    time.sleep(5)
-                    continue
-                
-                # Check if WiFi name contains any of the configured keywords
-                if not any(k.lower() in current_wifi.lower() for k in WIFI_KEYWORDS):
-                    print(f"Not a college network: {current_wifi}")
-                    print(f"(Looking for networks matching: {', '.join(WIFI_KEYWORDS)})")
-                    time.sleep(5)
-                    continue
-                
-                if attempt_login(username, password, current_wifi):
-                    return
-                
-                print("Retrying...")
-                time.sleep(10)
-            
-            print("\n✗ Failed after maximum attempts")
-            print("Your credentials might be incorrect.")
-            print(f"To reset, delete the file: {CONFIG_FILE}")
-    finally:
-        release_lock()
+            print("Retrying...")
+            time.sleep(10)
+        
+        print("\n✗ Failed after maximum attempts")
+        print("Your credentials might be incorrect.")
+        print(f"To reset, delete the file: {CONFIG_FILE}")
 
 
 if __name__ == "__main__":
@@ -295,5 +256,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\n\nStopped by user")
-        release_lock()
         sys.exit(0)
